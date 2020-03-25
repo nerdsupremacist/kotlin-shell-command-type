@@ -1,23 +1,40 @@
 package org.jetbrains.kotlin.script.examples
 
+import org.jetbrains.kotlin.script.examples.shell.parser.OverviewDescription
+import org.jetbrains.kotlin.script.examples.shell.parser.Scanner
+import org.jetbrains.kotlin.script.examples.shell.parser.UsageSection
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
-import kotlin.reflect.full.memberProperties
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.baseClassLoader
-import kotlin.script.experimental.jvm.impl.getResourcePathForClass
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.script.experimental.jvmhost.createJvmCompilationConfigurationFromTemplate
+
+val usage = """
+    USAGE: graphaello [subcommand [arguments]]
+    
+    SUBCOMMANDS:
+      init                    Configures Graphaello for an Xcode Project
+      codegen                 Generates a file with all the boilerplate code for your GraphQL Code
+      add                     Adds/Updates an API Schema to your project
+    
+    FLAGS:
+      -h, --help              Displays help text.
+""".trimIndent()
 
 class ScriptTest {
 
     @Test
     fun `Sample Test`() {
+        val scanner = Scanner(usage)
+        val description = OverviewDescription.takeFrom(scanner)
+        val usage = UsageSection.fromSection(description!!.sections.first())
+
         val out = captureOut {
             val res = evalFile("hello-world")
             assertSucceeded(res)

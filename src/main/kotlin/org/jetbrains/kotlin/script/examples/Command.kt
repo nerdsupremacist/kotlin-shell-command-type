@@ -14,7 +14,7 @@ object Configurator : RefineScriptCompilationConfigurationHandler {
             ?.get(ScriptCollectedData.foundAnnotations)
             ?.mapNotNull { annotation ->
                 when (annotation) {
-                    is Provider -> annotation
+                    is Command -> annotation
                     else -> null
                 }
             }

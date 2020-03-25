@@ -10,7 +10,7 @@ object ScriptDefinition : ScriptCompilationConfiguration({
 
     defaultImports(
         File::class,
-        Provider::class
+        Command::class
     )
 
     jvm {
@@ -18,7 +18,7 @@ object ScriptDefinition : ScriptCompilationConfiguration({
     }
 
     refineConfiguration {
-        onAnnotations(Provider::class, handler = Configurator)
+        onAnnotations(Command::class, handler = Configurator)
     }
 
     ide {

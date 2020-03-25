@@ -10,15 +10,18 @@ val kotlinVersion: String by extra("1.3.70-eap-184")
 
 repositories {
     maven("https://dl.bintray.com/kotlin/kotlin-eap")
+    maven("https://dl.bintray.com/jakubriegel/kotlin-shell")
     jcenter()
 }
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-compiler:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-script-util:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.+")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
+    implementation("eu.jrie.jetbrains:kotlin-shell-core:0.2")
+    implementation("org.slf4j:slf4j-nop:1.7.26")
 }
 
 sourceSets {
