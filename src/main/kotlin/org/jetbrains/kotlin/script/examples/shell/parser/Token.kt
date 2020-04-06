@@ -11,6 +11,7 @@ sealed class Token {
     data class Spacing(val spaces: Int) : Token()
 
     object Colon : Token()
+    object Comma : Token()
     object EmptyLine : Token()
 
     object ChoicesStart : Token()
@@ -29,6 +30,7 @@ sealed class Token {
         is Group -> "$placeholder..."
         is Spacing -> generateSequence { " " }.take(spaces).joinToString()
         Colon -> ":"
+        Comma -> ","
         EmptyLine -> "\n"
         ChoicesStart -> "["
         ChoicesEnd -> "]"

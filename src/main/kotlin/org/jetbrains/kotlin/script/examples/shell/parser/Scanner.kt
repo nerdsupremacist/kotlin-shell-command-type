@@ -7,6 +7,7 @@ private val placeholderRegex = Regex("^[^\\S\\r\\n]*(?:(?:<([a-zA-Z][a-zA-Z0-9-]
 private val ellipsisRegex = Regex("^[^\\S\\r\\n]*\\.{3}")
 private val spacingRegex = Regex("^([^\\S\\r\\n]+)")
 private val colonRegex = Regex("^[^\\S\\r\\n]*:")
+private val commaRegex = Regex("^[^\\S\\r\\n]*,")
 private val emptyLineRegex = Regex("^([^\\S\\r\\n]*\\n)+")
 private val choicesStartRegex = Regex("^[^\\S\\r\\n]*\\(")
 private val choicesEndRegex = Regex("^[^\\S\\r\\n]*\\)")
@@ -73,6 +74,8 @@ class Scanner(text: String) {
     fun takeSpacing() = take(spacingRegex)?.let { Token.Spacing(it.groups[1]!!.value.length) }
 
     fun takeColon() = take(colonRegex)?.let { Token.Colon }
+
+    fun takeComma() = take(commaRegex)?.let { Token.Comma }
 
     fun takeEmptyLine() = take(emptyLineRegex)?.let { Token.EmptyLine }
 

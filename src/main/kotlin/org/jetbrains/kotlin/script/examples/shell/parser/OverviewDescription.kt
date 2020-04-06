@@ -7,7 +7,10 @@ data class OverviewDescription(
     data class Section(
         val title: Token?,
         val lines: List<Token.Line>
-    )
+    ) {
+        val isUsageSection: Boolean
+            get() = title is Token.Word && title.word.toLowerCase() == "usage"
+    }
 
     companion object {
         fun takeFrom(scanner: Scanner) = scanner.tryLookahead { takeOverviewDescription() }
