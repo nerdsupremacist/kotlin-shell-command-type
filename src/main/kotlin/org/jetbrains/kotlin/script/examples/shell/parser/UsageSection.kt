@@ -18,7 +18,7 @@ data class UsageSection(
 
     companion object {
         fun fromSection(section: OverviewDescription.Section): UsageSection? {
-            assert(section.name.word.toLowerCase() == "usage")
+            assert(section.title is Token.Word && section.title.word.toLowerCase() == "usage")
 
             val lines = section.lines.map { Scanner(it.line) }
             val usages = mutableListOf<Usage>()
@@ -44,8 +44,8 @@ private fun Scanner.takeUsage() = collect { takeComponent() }
 private fun Scanner.takeComponent(): UsageSection.Usage.Component? {
     takeGroup()?.let { return UsageSection.Usage.Component.Group(it) }
 
-    takeWord()?.let { return UsageSection.Usage.Component.Word(it) }
     takePlaceholder()?.let { return UsageSection.Usage.Component.Placeholder(it) }
+    takeWord()?.let { return UsageSection.Usage.Component.Word(it) }
     takeOption()?.let { return UsageSection.Usage.Component.Option(it) }
 
     tryLookahead {

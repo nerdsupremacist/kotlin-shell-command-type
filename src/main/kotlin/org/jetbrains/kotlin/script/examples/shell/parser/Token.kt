@@ -8,6 +8,8 @@ sealed class Token {
     data class Placeholder(val placeholder: String) : Token()
     data class Group(val placeholder: Placeholder) : Token()
 
+    data class Spacing(val spaces: Int) : Token()
+
     object Colon : Token()
     object EmptyLine : Token()
 
@@ -18,4 +20,20 @@ sealed class Token {
 
     object OptionalStart : Token()
     object OptionalEnd : Token()
+
+    override fun toString() = when (this) {
+        is Word -> word
+        is Line -> line
+        is Option -> "-$option"
+        is Placeholder -> "<$placeholder>"
+        is Group -> "$placeholder..."
+        is Spacing -> generateSequence { " " }.take(spaces).joinToString()
+        Colon -> ":"
+        EmptyLine -> "\n"
+        ChoicesStart -> "["
+        ChoicesEnd -> "]"
+        Separator -> "|"
+        OptionalStart -> "("
+        OptionalEnd -> ")"
+    }
 }

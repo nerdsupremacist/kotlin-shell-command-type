@@ -5,7 +5,7 @@ data class OverviewDescription(
     val sections: List<Section>
 ) {
     data class Section(
-        val name: Token.Word,
+        val title: Token?,
         val lines: List<Token.Line>
     )
 
@@ -32,12 +32,16 @@ private fun Scanner.takeLines() = collect {
 }
 
 private fun Scanner.takeSection(): OverviewDescription.Section? {
-    val sectionName = takeWord() ?: return null
-    takeColon() ?: return null
+    val title = tryLookahead {
+        val word = takeWord() ?: return@tryLookahead null
+        takeColon() ?: return@tryLookahead null
+        word
+    } ?: takeLine()
 
     takeEmptyLine()
 
     val lines = collect {
+        takeSpacing() ?: return@collect null
         takeLine()
     }.takeIf { it.isNotEmpty() } ?: return null
 
@@ -46,7 +50,7 @@ private fun Scanner.takeSection(): OverviewDescription.Section? {
     }
 
     return OverviewDescription.Section(
-        name = sectionName,
+        title = title,
         lines = lines
     )
 }

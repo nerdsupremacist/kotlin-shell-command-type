@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.script.examples.shell.parser
 private val wordRegex = Regex("^[^\\S\\r\\n]*([a-zA-Z][a-zA-Z0-9-_]*)\\b")
 private val lineRegex = Regex("^[^\\S\\r\\n]*(.+)(\n|$)")
 private val optionRegex = Regex("^[^\\S\\r\\n]*-{1,2}([a-zA-Z][a-zA-Z0-9-_]*)\\b")
-private val placeholderRegex = Regex("^[^\\S\\r\\n]*<([a-zA-Z][a-zA-Z0-9-]*)>")
+private val placeholderRegex = Regex("^[^\\S\\r\\n]*(?:(?:<([a-zA-Z][a-zA-Z0-9-]*)>)|([A-Z][A-Z-]*))")
 private val ellipsisRegex = Regex("^[^\\S\\r\\n]*\\.{3}")
+private val spacingRegex = Regex("^([^\\S\\r\\n]+)")
 private val colonRegex = Regex("^[^\\S\\r\\n]*:")
 private val emptyLineRegex = Regex("^([^\\S\\r\\n]*\\n)+")
 private val choicesStartRegex = Regex("^[^\\S\\r\\n]*\\(")
@@ -62,12 +63,14 @@ class Scanner(text: String) {
 
     fun takeOption() = take(optionRegex)?.let { Token.Option(it.groups[1]!!.value) }
 
-    fun takePlaceholder() = take(placeholderRegex)?.let { Token.Placeholder(it.groups[1]!!.value) }
+    fun takePlaceholder() = take(placeholderRegex)?.let { Token.Placeholder(it.groups[1]?.value ?: it.groups[2]!!.value) }
 
     fun takeGroup() = tryLookahead {
         val placeholder = takePlaceholder() ?: return@tryLookahead null
         take(ellipsisRegex)?.let { Token.Group(placeholder) }
     }
+
+    fun takeSpacing() = take(spacingRegex)?.let { Token.Spacing(it.groups[1]!!.value.length) }
 
     fun takeColon() = take(colonRegex)?.let { Token.Colon }
 
