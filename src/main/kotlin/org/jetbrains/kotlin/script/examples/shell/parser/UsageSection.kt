@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.script.examples.shell.parser
 
 data class UsageSection(
+    val section: OverviewDescription.Section,
     val usages: List<Usage>
 ) {
 
@@ -20,10 +21,18 @@ data class UsageSection(
             assert(section.name.word.toLowerCase() == "usage")
 
             val lines = section.lines.map { Scanner(it.line) }
-            val usages = lines.map { scanner ->
-                scanner.takeUsage()?.takeIf { scanner.hasFinished() } ?: return null
+            val usages = mutableListOf<Usage>()
+            lines.forEach { scanner ->
+                val usage = scanner.takeUsage()?.takeIf { scanner.hasFinished() } ?: return null
+                if (usages.isNotEmpty() && usage.components.firstOrNull() !is Usage.Component.Word) {
+                    val index = usages.lastIndex
+                    usages[index] = Usage(usages[index].components + usage.components)
+                } else {
+                    usages.add(usage)
+                }
             }
-            return UsageSection(usages)
+
+            return UsageSection(section, usages)
         }
     }
 }
