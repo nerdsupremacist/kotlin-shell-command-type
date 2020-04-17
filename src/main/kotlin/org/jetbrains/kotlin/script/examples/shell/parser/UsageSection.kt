@@ -63,12 +63,13 @@ private fun Scanner.takeLeadingComponent(): UsageSection.Usage.Component? = tryL
 
 
 private fun Scanner.takeSingleComponent(): UsageSection.Usage.Component? {
-    takeLeaveEmpty()?.let { return UsageSection.Usage.Component.LeaveEmpty }
     takeGroup()?.let { return UsageSection.Usage.Component.Group(it) }
 
     takePlaceholder()?.let { return UsageSection.Usage.Component.Placeholder(it) }
     takeWord()?.let { return UsageSection.Usage.Component.Word(it) }
     takeOption()?.let { return UsageSection.Usage.Component.Option(it) }
+
+    takeLeaveEmpty()?.let { return UsageSection.Usage.Component.LeaveEmpty }
 
     tryLookahead {
         takeOptionalStart() ?: return@tryLookahead null

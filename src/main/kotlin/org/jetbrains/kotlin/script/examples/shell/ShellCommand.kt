@@ -5,6 +5,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.kotlin.script.examples.shell.parser.*
 import org.jetbrains.kotlin.script.examples.shell.utils.toCamelCase
 import org.jetbrains.kotlin.script.examples.shell.utils.toUpperCamelCase
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 
 data class ShellCommand(
     val name: List<Token.Word>,
@@ -42,55 +44,35 @@ fun ShellCommand.code(): String = buildString {
     val commandName = name.joinToString(" ") { it.word }
     val singleName = name.last().word.toCamelCase()
 
-    if (parentInterfaceName != null) {
-        if (mandatory.isNotEmpty()) {
-            val optionsList = mandatory
-                .joinToString(", ") { option ->
-                    val usedName = option.names.maxBy { it.option.length } ?: TODO()
-                    val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
-                    when (option) {
-                        is ShellCommand.Option.Flag -> "$optionName: Boolean"
-                        is ShellCommand.Option.Value -> "$optionName: String"
-                    }
+    if (mandatory.isNotEmpty()) {
+        val optionsList = mandatory
+            .joinToString(", ") { option ->
+                val usedName = option.names.maxBy { it.option.length } ?: TODO()
+                val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
+                when (option) {
+                    is ShellCommand.Option.Flag -> "$optionName: Boolean"
+                    is ShellCommand.Option.Value -> "$optionName: String"
                 }
+            }
 
-            val optionsAssignment = mandatory
-                .joinToString(", ") { option ->
-                    val usedName = option.names.maxBy { it.option.length } ?: TODO()
-                    val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
-                    when (option) {
-                        is ShellCommand.Option.Flag -> "if ($optionName) \"${usedName.dashes}${usedName.option}\" else \"\""
-                        is ShellCommand.Option.Value -> if (option.inline) "$optionName" else "\"${usedName.dashes}${usedName.option}\${$optionName}\""
-                    }
+        val optionsAssignment = mandatory
+            .joinToString(", ") { option ->
+                val usedName = option.names.maxBy { it.option.length } ?: TODO()
+                val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
+                when (option) {
+                    is ShellCommand.Option.Flag -> "if ($optionName) \"${usedName.dashes}${usedName.option}\" else \"\""
+                    is ShellCommand.Option.Value -> if (option.inline) optionName else "\"${usedName.dashes}${usedName.option}\${$optionName}\""
                 }
+            }
 
+        if (parentInterfaceName != null) {
             appendln("@JvmName(\"get$interfaceName\") fun TypeSafeCommand<$parentInterfaceName>.$singleName($optionsList) = TypeSafeCommand<$interfaceName>(\"$commandName\", $optionsAssignment)")
         } else {
-            appendln("val TypeSafeCommand<$parentInterfaceName>.$singleName @JvmName(\"get$interfaceName\")  get() = TypeSafeCommand<$interfaceName>(\"$commandName\")")
+            appendln("fun $singleName($optionsList) = TypeSafeCommand<$interfaceName>(\"$commandName\", $optionsAssignment)")
         }
     } else {
-        if (mandatory.isNotEmpty()) {
-            val optionsList = mandatory
-                .joinToString(", ") { option ->
-                    val usedName = option.names.maxBy { it.option.length } ?: TODO()
-                    val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
-                    when (option) {
-                        is ShellCommand.Option.Flag -> "$optionName: Boolean"
-                        is ShellCommand.Option.Value -> "$optionName: String"
-                    }
-                }
-
-            val optionsAssignment = mandatory
-                .joinToString(", ") { option ->
-                    val usedName = option.names.maxBy { it.option.length } ?: TODO()
-                    val optionName = if (usedName.option.length > 1) usedName.option.toCamelCase() else usedName.option
-                    when (option) {
-                        is ShellCommand.Option.Flag -> "if ($optionName) \"${usedName.dashes}${usedName.option}\" else \"\""
-                        is ShellCommand.Option.Value -> if (option.inline) "$optionName" else "\"${usedName.dashes}${usedName.option}\${$optionName}\""
-                    }
-                }
-
-            appendln("fun $singleName($optionsList) = TypeSafeCommand<$interfaceName>(\"$commandName\", $optionsAssignment)")
+        if (parentInterfaceName != null) {
+            appendln("val TypeSafeCommand<$parentInterfaceName>.$singleName @JvmName(\"get$interfaceName\")  get() = TypeSafeCommand<$interfaceName>(\"$commandName\")")
         } else {
             appendln("val $singleName = TypeSafeCommand<$interfaceName>(\"$commandName\")")
         }
@@ -117,14 +99,10 @@ fun ShellCommand.code(): String = buildString {
 @ExperimentalStdlibApi
 @ExperimentalCoroutinesApi
 suspend fun ShellCommand.Companion.fromName(name: String): ShellCommand? {
-    var message = ""
-    shell {
-        pipeline {
-            "$name --help".process() pipe stringLambda { string ->
-                message += string
-                "" to ""
-            }
-        }.join()
+    val message = captureOut {
+        shell {
+            "$name --help"().join()
+        }
     }
 
     val scanner = Scanner(message)
@@ -245,4 +223,21 @@ private fun Scanner.takeSubcommand(): Token.Word? {
     val first = takeWord() ?: return null
     takeSpacing()?.takeIf { it.spaces > 1 } ?: return null
     return first
+}
+
+
+private inline fun captureOut(body: () -> Unit): String {
+    val outStream = ByteArrayOutputStream()
+    val prevOut = System.out
+    val prevErr = System.err
+    System.setOut(PrintStream(outStream))
+    System.setErr(PrintStream(outStream))
+    try {
+        body()
+    } finally {
+        System.out.flush()
+        System.setOut(prevOut)
+        System.setErr(prevErr)
+    }
+    return outStream.toString().trim()
 }
