@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.script.examples.shell.parser
 sealed class Token {
     data class Word(val word: String) : Token()
     data class Line(val line: String) : Token()
-    data class Option(val option: String) : Token()
+    data class Option(val dashes: String, val option: String) : Token()
 
     data class Placeholder(val placeholder: String) : Token()
     data class Group(val placeholder: Placeholder) : Token()
@@ -22,6 +22,8 @@ sealed class Token {
     object OptionalStart : Token()
     object OptionalEnd : Token()
 
+    object LeaveEmpty : Token()
+
     override fun toString() = when (this) {
         is Word -> word
         is Line -> line
@@ -37,5 +39,6 @@ sealed class Token {
         Separator -> "|"
         OptionalStart -> "("
         OptionalEnd -> ")"
+        LeaveEmpty -> "-"
     }
 }

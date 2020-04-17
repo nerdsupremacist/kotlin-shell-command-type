@@ -13,6 +13,7 @@ data class UsageSection(
             data class Option(val option: Token.Option) : Component()
             data class Optional(val optional: Usage) : Component()
             data class Choices(val choices: List<Usage>) : Component()
+            object LeaveEmpty : Component()
         }
     }
 
@@ -42,6 +43,27 @@ private fun Scanner.takeUsage() = collect { takeComponent() }
     ?.let { UsageSection.Usage(it) }
 
 private fun Scanner.takeComponent(): UsageSection.Usage.Component? {
+    tryLookahead {
+        val choices = collect {
+            takeLeadingComponent()
+        }.takeIf { it.isNotEmpty() } ?: return@tryLookahead null
+
+        val last = takeSingleComponent() ?: return@tryLookahead null
+        (choices + last).map { UsageSection.Usage(listOf(it)) }
+    }?.let { return UsageSection.Usage.Component.Choices(it) }
+
+    return takeSingleComponent()
+}
+
+private fun Scanner.takeLeadingComponent(): UsageSection.Usage.Component? = tryLookahead {
+    val component = takeSingleComponent()
+    takeSeparator() ?: return@tryLookahead null
+    component
+}
+
+
+private fun Scanner.takeSingleComponent(): UsageSection.Usage.Component? {
+    takeLeaveEmpty()?.let { return UsageSection.Usage.Component.LeaveEmpty }
     takeGroup()?.let { return UsageSection.Usage.Component.Group(it) }
 
     takePlaceholder()?.let { return UsageSection.Usage.Component.Placeholder(it) }

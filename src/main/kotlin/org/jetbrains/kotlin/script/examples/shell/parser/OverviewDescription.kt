@@ -48,10 +48,6 @@ private fun Scanner.takeSection(): OverviewDescription.Section? {
         takeLine()
     }.takeIf { it.isNotEmpty() } ?: return null
 
-    if (takeEmptyLine() == null && !hasFinished()) {
-        return null
-    }
-
     return OverviewDescription.Section(
         title = title,
         lines = lines

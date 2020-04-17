@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.script.examples.shell.parser
 
 private val wordRegex = Regex("^[^\\S\\r\\n]*([a-zA-Z][a-zA-Z0-9-_]*)\\b")
 private val lineRegex = Regex("^[^\\S\\r\\n]*(.+)(\n|$)")
-private val optionRegex = Regex("^[^\\S\\r\\n]*-{1,2}([a-zA-Z][a-zA-Z0-9-_]*)\\b")
+private val optionRegex = Regex("^[^\\S\\r\\n]*(-{1,2})([a-zA-Z][a-zA-Z0-9-_]*)\\b")
 private val placeholderRegex = Regex("^[^\\S\\r\\n]*(?:(?:<([a-zA-Z][a-zA-Z0-9-]*)>)|([A-Z][A-Z-]*))")
 private val ellipsisRegex = Regex("^[^\\S\\r\\n]*\\.{3}")
 private val spacingRegex = Regex("^([^\\S\\r\\n]+)")
@@ -14,6 +14,7 @@ private val choicesEndRegex = Regex("^[^\\S\\r\\n]*\\)")
 private val separatorRegex = Regex("^[^\\S\\r\\n]*\\|")
 private val optionalsStartRegex = Regex("^[^\\S\\r\\n]*\\[")
 private val optionalsEndRegex = Regex("^[^\\S\\r\\n]*]")
+private val leaveEmptyRegex = Regex("^[^\\S\\r\\n]*-")
 
 class Scanner(text: String) {
     private var consumed = ""
@@ -62,12 +63,12 @@ class Scanner(text: String) {
 
     fun takeLine() = take(lineRegex)?.let { Token.Line(it.groups[1]!!.value) }
 
-    fun takeOption() = take(optionRegex)?.let { Token.Option(it.groups[1]!!.value) }
+    fun takeOption() = take(optionRegex)?.let { Token.Option(it.groups[1]!!.value, it.groups[2]!!.value) }
 
     fun takePlaceholder() = take(placeholderRegex)?.let { Token.Placeholder(it.groups[1]?.value ?: it.groups[2]!!.value) }
 
     fun takeGroup() = tryLookahead {
-        val placeholder = takePlaceholder() ?: return@tryLookahead null
+        val placeholder = takePlaceholder() ?: takeWord()?.let { Token.Placeholder(it.word) } ?: return@tryLookahead null
         take(ellipsisRegex)?.let { Token.Group(placeholder) }
     }
 
@@ -89,7 +90,13 @@ class Scanner(text: String) {
 
     fun takeOptionalEnd() = take(optionalsEndRegex)?.let { Token.OptionalEnd }
 
+    fun takeLeaveEmpty() = take(leaveEmptyRegex)?.let { Token.LeaveEmpty }
+
     fun hasFinished(): Boolean = remaining.isBlank()
+
+    override fun toString(): String {
+        return consumed + remaining
+    }
 }
 
 
